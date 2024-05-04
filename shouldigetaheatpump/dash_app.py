@@ -1,7 +1,7 @@
 import pendulum
 from dash import Dash, html, dash_table, dcc, Output, Input, callback
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 
 from shouldigetaheatpump import get_data
 
@@ -51,12 +51,31 @@ def update_graph(lat_long: str | None):
     start = end - pendulum.duration(years=1)
 
     temperatures = get_data.get_weather_data(lat=lat, long=long, start=start, end=end)
+    daily_mean = temperatures.groupby(by=temperatures["date"].dt.date).mean()
 
-    fig = px.scatter(temperatures.set_index("date"))
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=temperatures["date"],
+            y=temperatures["temperature_2m"],
+            mode="markers",
+            name="Hourly Temperature",
+            marker=dict(size=3, color="#35F0BF"),
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=daily_mean["date"],
+            y=daily_mean["temperature_2m"],
+            mode="lines",
+            name="Daily Average",
+            marker=dict(color="#35BBF0"),
+        )
+    )
     return fig
 
 
 if __name__ == "__main__":
     import os
 
-    app.run(debug=False, use_reloader="WINGDB_ACTIVE" not in os.environ)
+    app.run(debug=False, use_reloader=True)

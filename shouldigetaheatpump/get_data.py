@@ -26,8 +26,6 @@ def get_weather_data(lat: float, lon: float, start: Date, end: Date):
 
     logger.info(f"Coordinates {response.Latitude()}°E {response.Longitude()}°N")
     logger.info(f"Elevation {response.Elevation()} m asl")
-    logger.info(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
-    logger.info(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
     hourly = response.Hourly()
     hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()

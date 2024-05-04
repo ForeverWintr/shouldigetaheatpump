@@ -110,4 +110,4 @@ ENV/
 # macOS
 .DS_Store
 
-tomorrow_apikey
+*.sqlite

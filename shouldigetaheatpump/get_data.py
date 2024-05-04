@@ -6,7 +6,7 @@ from loguru import logger
 import pandas as pd
 
 
-def get_weather_data(lat: float, lon: float, start: Date, end: Date):
+def get_weather_data(lat: float, long: float, start: Date, end: Date):
     """Get historical weather data."""
 
     # Based on example code here: https://open-meteo.com/en/docs/historical-weather-api
@@ -16,8 +16,8 @@ def get_weather_data(lat: float, lon: float, start: Date, end: Date):
     client = openmeteo_requests.Client(session=cache_session)
     url = "https://archive-api.open-meteo.com/v1/archive"
     params = {
-        "latitude": 51.11488758418279,
-        "longitude": -114.06747997399614,
+        "latitude": lat,
+        "longitude": long,
         "start_date": str(start),
         "end_date": str(end),
         "hourly": "temperature_2m",

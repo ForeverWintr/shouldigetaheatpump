@@ -11,6 +11,9 @@ python = "^3.12"
 pytest = "^8.1.1"
 pendulum = "^3.0.0"
 openmeteo-requests = "^1.2.0"
+pandas = "^2.2.2"
+requests-cache = "^1.2.0"
+loguru = "^0.7.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"

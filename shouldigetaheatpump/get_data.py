@@ -1,12 +1,16 @@
 from pendulum import Date
-import aiohttp
 
 
-async def get_weather_data(start: Date, end: Date):
+def get_weather_data(lat: float, lon: float, start: Date, end: Date):
     """Get historical weather data"""
 
-    51.11516647256088, -114.06747997399614
-    async with aiohttp.ClientSession() as session:
-        async with session.get("http://httpbin.org/get") as resp:
-            print(resp.status)
-            print(await resp.text())
+    url = "https://archive-api.open-meteo.com/v1/archive"
+    params = {
+        "latitude": 51.11488758418279,
+        "longitude": -114.06747997399614,
+        "start_date": "2024-04-18",
+        "end_date": "2024-05-02",
+        "hourly": "temperature_2m",
+    }
+
+    asdf

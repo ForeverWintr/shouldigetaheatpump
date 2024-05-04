@@ -47,7 +47,7 @@ def update_graph(lat_long: str | None):
         return {}
     lat, long = (float(x) for x in lat_long.split(","))
 
-    end = pendulum.Date.today() - pendulum.duration(days=10)
+    end = pendulum.now() - pendulum.duration(days=10)
     start = end - pendulum.duration(years=1)
 
     temperatures = get_data.get_weather_data(lat=lat, long=long, start=start, end=end)
@@ -57,7 +57,7 @@ def update_graph(lat_long: str | None):
     fig.add_trace(
         go.Scatter(
             x=temperatures["date"],
-            y=temperatures["temperature_2m"],
+            y=temperatures["temperature"],
             mode="markers",
             name="Hourly Temperature",
             marker=dict(size=3, color="#35F0BF"),
@@ -66,12 +66,14 @@ def update_graph(lat_long: str | None):
     fig.add_trace(
         go.Scatter(
             x=daily_mean["date"],
-            y=daily_mean["temperature_2m"],
+            y=daily_mean["temperature"],
             mode="lines",
             name="Daily Average",
             marker=dict(color="#35BBF0"),
         )
     )
+    fig.update_xaxes(range=[start, end])
+
     return fig
 
 

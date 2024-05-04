@@ -7,7 +7,7 @@ def test_get_weather_data():
     data = get_data.get_weather_data(
         lat=51.11516647256088,
         long=-114.06747997399614,
-        start=pendulum.date(2024, 1, 1),
-        end=pendulum.date(2024, 1, 31),
+        start=pendulum.datetime(2024, 1, 1),
+        end=pendulum.datetime(2024, 1, 2),
     )
     assert data.shape

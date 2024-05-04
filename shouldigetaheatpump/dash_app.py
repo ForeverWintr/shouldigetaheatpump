@@ -60,7 +60,7 @@ def update_graph(lat_long: str | None):
             y=temperatures["temperature"],
             mode="markers",
             name="Hourly Temperature",
-            marker=dict(size=3, color="#35F0BF"),
+            marker=dict(size=5, color="#35F0BF"),
         )
     )
     fig.add_trace(

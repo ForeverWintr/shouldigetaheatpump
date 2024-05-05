@@ -11,3 +11,8 @@ def test_get_weather_data():
         end=pendulum.datetime(2024, 1, 2),
     )
     assert data.shape
+
+
+def test_parse_daikin_cop():
+
+    parsed = get_data.parse_daikin_cop()

@@ -15,4 +15,5 @@ def test_get_weather_data():
 
 def test_parse_daikin_cop():
 
-    parsed = get_data.parse_daikin_cop()
+    parsed_cop = get_data.parse_daikin_cop()
+    parsed_extended = get_data.parse_daikin_extended_cop()

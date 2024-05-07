@@ -2,6 +2,7 @@ import itertools
 from pathlib import Path
 import pendulum
 import openmeteo_requests
+import pint
 import requests_cache
 from loguru import logger
 import pandas as pd
@@ -48,7 +49,7 @@ def get_weather_data(
     return result
 
 
-def parse_daikin_cop():
+def parse_daikin_data():
     """Skyair 3-ton, FTQ36/RZQ36"""
     header = "C FDB Btu/h kwh kw".split() + ["cop"]
     raw = """15.6 60.00 41,800 12.2 3.18 3.84
@@ -78,7 +79,7 @@ def parse_daikin_cop():
     return pd.DataFrame.from_records(parsed_rows, columns=header)
 
 
-def parse_daikin_extended_cop():
+def parse_daikin_extended_data():
 
     raw = """
 -13 -13 29.3 7.06 27.1 6.41 25.5 5.94 24.4 5.64 23.3 5.34 21.7 4.90

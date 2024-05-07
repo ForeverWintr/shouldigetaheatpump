@@ -2,10 +2,11 @@ import itertools
 from pathlib import Path
 import pendulum
 import openmeteo_requests
-import pint
 import requests_cache
 from loguru import logger
 import pandas as pd
+
+from shouldigetaheatpump import conversions
 
 
 def get_weather_data(
@@ -105,18 +106,32 @@ def parse_daikin_extended_data():
 60 56 – – 44.5 3.42 41.8 3.18 40 3.02 38.2 2.86 35.5 2.64
 64 60 – – – – – – 40 2.9 38.2 2.76 35.5 2.54"""
     rows = raw.strip().split("\n")
-    indoor_temps = ["61", "65", "68", "70", "72", "75"]
+    indoor_temps = [61, 65, 68, 70, 72, 75]
+    # convert to metric
+    ureg = conversions.get_unit_registry()
+    indoor_temps = [
+        int(ureg.Quantity(x, ureg.degF).to(ureg.degC).magnitude + 0.5)
+        for x in indoor_temps
+    ]
 
     # Total capacity, Milli-BTU-hour
     # Power Input, KW
     units = ["TC MBH", "PI KW"]
 
     # DB: dry bulb, WB: Wet bulb
-    header = ["FDB", "FWB"] + list(itertools.product(indoor_temps, units))
+    dry_bulbs = ["FDB", "FWB"]
+    header = dry_bulbs + list(itertools.product(indoor_temps, units))
 
     parsed_rows = []
     for row in rows:
         cells = row.split()
         parsed_rows.append([float(c) if c != "–" else float("nan") for c in cells])
 
-    return pd.DataFrame.from_records(parsed_rows, columns=header)
+    df = pd.DataFrame.from_records(parsed_rows, columns=header)
+
+    for colname in dry_bulbs:
+        metric = ureg.Quantity(df[colname].values, ureg.degF).to(ureg.degC)
+        metric_name = colname.replace("F", "C")
+        df[metric_name] = metric
+
+    return df

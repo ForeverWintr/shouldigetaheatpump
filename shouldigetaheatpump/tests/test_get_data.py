@@ -21,8 +21,6 @@ def test_parse_daikin_cop():
 
     ureg = conversions.get_unit_registry()
 
-    # index by dry bulb celcius temp.
-
     cop = conversions.calculate_cop(
         parsed_cop,
         heat_col="Btu/h",
@@ -33,22 +31,15 @@ def test_parse_daikin_cop():
 
     # This is using 68F, or 20C
     extended_cop = conversions.calculate_cop(
-        parsed_extended.set_index("FDB"),
-        heat_col=("68", "TC MBH"),
+        parsed_extended,
+        heat_col=(20, "TC MBH"),
         heat_unit=1000 * ureg.BTU / ureg.hour,
-        energy_col=("68", "PI KW"),
+        energy_col=(20, "PI KW"),
         energy_unit=ureg.kilowatt,
     )
+    parsed_extended["COP"] = extended_cop
 
     assert parsed_cop["cop"].tolist() == pytest.approx(cop.tolist(), rel=1e-2)
 
-    btu = 41800 * ureg.BTU
-    btuh = btu / ureg.hour
-    kw_produced = btuh.to(ureg.kilowatt)
-
-    kwh = 12.2 * ureg.kilowatt / ureg.hour
-    kw = 3.18 * ureg.kilowatt
-
-    cop = kw_produced / kw
-
-    asdf
+    # This value corresponds to -1.11C.
+    assert extended_cop.iloc[12] == pytest.approx(cop.iloc[8])

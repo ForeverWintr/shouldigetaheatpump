@@ -43,3 +43,8 @@ def test_parse_daikin_cop():
 
     # This value corresponds to -1.11C.
     assert extended_cop.iloc[12] == pytest.approx(cop.iloc[8])
+
+
+def test_parse_camrose_gj() -> None:
+    r = get_data.parse_camrose_gj()
+    assert 0

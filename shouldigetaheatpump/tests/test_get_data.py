@@ -47,4 +47,8 @@ def test_parse_daikin_cop():
 
 def test_parse_camrose_gj() -> None:
     r = get_data.parse_camrose_gj()
-    assert 0
+    assert list(r.columns) == ['Invoice Period',
+ 'Current Usage',
+ 'Current Charges ($)',
+ 'GST ($)',
+ 'Current Balance ($)']

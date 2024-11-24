@@ -31,8 +31,13 @@ app.layout = html.Div(
                 ),
             ]
         ),
-        html.Div("Hourly temperature"),
-        dcc.Graph(figure={}, id="temperature"),
+        html.Div(
+            children=[
+                "Hourly temperature",
+                dcc.Graph(figure={}, id="temperature"),
+                "Enter monthly heat usage:",
+            ]
+        ),
     ]
 )
 # 51.11488758418279, -114.06747997399614

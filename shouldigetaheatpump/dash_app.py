@@ -1,6 +1,7 @@
 import pendulum
 import plotly.graph_objects as go
 from dash import Dash, Input, Output, callback, dcc, html
+import dash_leaflet as dl
 
 from shouldigetaheatpump import get_data
 
@@ -32,6 +33,20 @@ app.layout = html.Div(
         ),
         html.Div(
             children=[
+                html.H4("Or click on the map:"),
+                dl.Map(
+                    id="location-map",
+                    center=[51.1149, -114.0675],
+                    zoom=10,
+                    children=[
+                        dl.TileLayer(),
+                    ],
+                    style={'width': '100%', 'height': '400px'},
+                ),
+            ]
+        ),
+        html.Div(
+            children=[
                 "Hourly temperature",
                 dcc.Graph(figure={}, id="temperature"),
                 "Enter monthly heat usage:",
@@ -40,6 +55,66 @@ app.layout = html.Div(
     ]
 )
 # 51.11488758418279, -114.06747997399614
+
+
+@callback(
+    Output(component_id="lat-long", component_property="value"),
+    Output(component_id="location-map", component_property="children"),
+    Input(component_id="location-map", component_property="clickData"),
+)
+def map_click(click_data):
+    """Update text input and map marker when map is clicked."""
+    if not click_data:
+        # Return TileLayer only (no marker)
+        return None, [dl.TileLayer()]
+
+    # Extract lat/lng from clickData dictionary
+    lat = click_data['latlng']['lat']
+    lng = click_data['latlng']['lng']
+
+    # Format as "lat, lng" string for text input
+    lat_long_str = f"{lat}, {lng}"
+
+    # Create marker at clicked location
+    marker = dl.Marker(
+        position=[lat, lng],
+        children=[
+            dl.Tooltip("Selected Location"),
+            dl.Popup(f"{lat:.4f}°, {lng:.4f}°")
+        ]
+    )
+
+    # Return updated text input and map children (TileLayer + Marker)
+    return lat_long_str, [dl.TileLayer(), marker]
+
+
+@callback(
+    Output(component_id="location-map", component_property="children", allow_duplicate=True),
+    Input(component_id="lat-long", component_property="value"),
+    prevent_initial_call=True,
+)
+def text_input_to_map(lat_long: str | None):
+    """Update map marker when text input changes."""
+    if not lat_long:
+        # No marker if input is empty
+        return [dl.TileLayer()]
+
+    try:
+        lat, lng = (float(x.strip()) for x in lat_long.split(","))
+
+        # Create marker at specified coordinates
+        marker = dl.Marker(
+            position=[lat, lng],
+            children=[
+                dl.Tooltip("Selected Location"),
+                dl.Popup(f"{lat:.4f}°, {lng:.4f}°")
+            ]
+        )
+
+        return [dl.TileLayer(), marker]
+    except (ValueError, AttributeError):
+        # Invalid input - return just TileLayer (no marker)
+        return [dl.TileLayer()]
 
 
 @callback(

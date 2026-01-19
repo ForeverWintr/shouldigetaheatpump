@@ -32,20 +32,45 @@ The app will be available at http://127.0.0.1:8050/
 
 ### Usage
 
-1. Enter a location by either:
-   - Typing latitude and longitude coordinates (e.g., `51.1149, -114.0675`)
-   - Clicking on the interactive map
-2. View historical temperature data and heat pump efficiency analysis
+1. Click on the interactive map to select a location
+2. The coordinates will be displayed below the map
+3. View historical temperature data and heat pump efficiency analysis
 
 ## Development
 
-```bash
-# Run all tests
-uv run pytest
+### Testing
 
-# Run a single test
+The project includes both unit tests and integration tests:
+
+```bash
+# Run all tests (excluding integration tests that require chromedriver)
+uv run pytest -m "not integration"
+
+# Run only unit tests for the Dash app
+uv run pytest shouldigetaheatpump/tests/test_dash_app.py -v
+
+# Run a specific test
 uv run pytest shouldigetaheatpump/tests/test_get_data.py::test_get_weather_data
 
+# Run with coverage
+uv run pytest --cov=shouldigetaheatpump --cov-report=html
+```
+
+#### Integration Tests
+
+Integration tests use Selenium to test the full app in a browser. To run them:
+
+1. Install [ChromeDriver](https://chromedriver.chromium.org/downloads) and ensure it's in your PATH
+2. Run the integration tests:
+   ```bash
+   uv run pytest -m integration
+   ```
+
+**Note:** Integration tests are optional and primarily useful for CI/CD pipelines or testing critical user flows.
+
+### Code Quality
+
+```bash
 # Format code
 uv run ruff format shouldigetaheatpump/
 

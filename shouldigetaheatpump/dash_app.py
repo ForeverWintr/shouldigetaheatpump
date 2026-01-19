@@ -1,7 +1,6 @@
 import pendulum
-from dash import Dash, html, dash_table, dcc, Output, Input, callback
-import pandas as pd
 import plotly.graph_objects as go
+from dash import Dash, Input, Output, callback, dcc, html
 
 from shouldigetaheatpump import get_data
 
@@ -83,6 +82,4 @@ def update_graph(lat_long: str | None):
 
 
 if __name__ == "__main__":
-    import os
-
     app.run(debug=False, use_reloader=True)

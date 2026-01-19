@@ -1,7 +1,7 @@
 import pendulum
 import pytest
 
-from shouldigetaheatpump import get_data, conversions
+from shouldigetaheatpump import conversions, get_data
 
 
 def test_get_weather_data():
@@ -15,7 +15,6 @@ def test_get_weather_data():
 
 
 def test_parse_daikin_cop():
-
     parsed_cop = get_data.parse_daikin_data()
     parsed_extended = get_data.parse_daikin_extended_data()
 
@@ -47,8 +46,10 @@ def test_parse_daikin_cop():
 
 def test_parse_camrose_gj() -> None:
     r = get_data.parse_camrose_gj()
-    assert list(r.columns) == ['Invoice Period',
- 'Current Usage',
- 'Current Charges ($)',
- 'GST ($)',
- 'Current Balance ($)']
+    assert list(r.columns) == [
+        "Invoice Period",
+        "Current Usage",
+        "Current Charges ($)",
+        "GST ($)",
+        "Current Balance ($)",
+    ]

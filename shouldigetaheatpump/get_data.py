@@ -1,10 +1,11 @@
 import itertools
 from pathlib import Path
-import pendulum
+
 import openmeteo_requests
+import pandas as pd
+import pendulum
 import requests_cache
 from loguru import logger
-import pandas as pd
 
 from shouldigetaheatpump import conversions
 
@@ -81,7 +82,6 @@ def parse_daikin_data():
 
 
 def parse_daikin_extended_data():
-
     raw = """
 -13 -13 29.3 7.06 27.1 6.41 25.5 5.94 24.4 5.64 23.3 5.34 21.7 4.90
 -9 -9 34.3 7.07 33 6.79 32.1 6.59 31.3 6.43 29.9 6.07 27.8 5.53
@@ -138,5 +138,5 @@ def parse_daikin_extended_data():
 
 
 def parse_camrose_gj() -> pd.DataFrame:
-    fp = Path(__file__).parent.parent / 'data' / 'camrose_data.csv'
+    fp = Path(__file__).parent.parent / "data" / "camrose_data.csv"
     return pd.read_csv(fp)

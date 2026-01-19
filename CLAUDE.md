@@ -22,7 +22,7 @@ uv run pytest
 uv run pytest shouldigetaheatpump/tests/test_get_data.py::test_get_weather_data
 
 # Format code
-uv run black shouldigetaheatpump/
+uv run ruff format shouldigetaheatpump/
 
 # Lint code
 uv run ruff check shouldigetaheatpump/

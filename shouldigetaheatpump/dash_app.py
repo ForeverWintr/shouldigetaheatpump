@@ -1,58 +1,92 @@
 import pendulum
 import plotly.graph_objects as go
 from dash import Dash, Input, Output, callback, dcc, html
+import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 
 from shouldigetaheatpump import get_data
 
-# Initialize the app
-app = Dash(__name__)
+# Initialize the app with Bootstrap theme
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # App layout
-app.layout = html.Div(
+app.layout = dbc.Container(
     [
-        html.Div(children="Should I Get a Heat Pump?"),
-        html.Hr(),
-        html.Div(
-            children=[
-                html.H4(
-                    "Enter a location:",
-                    style={
-                        "display": "inline-block",
-                        "margin-right": 20,
-                        # "border": "1px solid black",
-                    },
-                ),
-                dcc.Input(
-                    id="lat-long",
-                    type="text",
-                    placeholder="lattitude, longitude",
-                    debounce=True,
-                ),
-            ]
+        # Header
+        dbc.Row(
+            dbc.Col(
+                html.H1(
+                    "Should I Get a Heat Pump?",
+                    className="text-center my-4"
+                )
+            )
         ),
-        html.Div(
-            children=[
-                html.H4("Or click on the map:"),
-                dl.Map(
-                    id="location-map",
-                    center=[51.1149, -114.0675],
-                    zoom=10,
-                    children=[
-                        dl.TileLayer(),
-                    ],
-                    style={'width': '100%', 'height': '400px'},
+
+        # Location input card
+        dbc.Row(
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody(
+                        [
+                            html.H5("Select Location", className="card-title mb-3"),
+                            dbc.Label("Enter coordinates or click on the map below:"),
+                            dbc.Input(
+                                id="lat-long",
+                                type="text",
+                                placeholder="latitude, longitude (e.g., 51.1149, -114.0675)",
+                                debounce=True,
+                                className="mb-2",
+                            ),
+                        ]
+                    ),
+                    className="mb-4 shadow-sm"
                 ),
-            ]
+                width=12
+            )
         ),
-        html.Div(
-            children=[
-                "Hourly temperature",
-                dcc.Graph(figure={}, id="temperature"),
-                "Enter monthly heat usage:",
-            ]
+
+        # Map card
+        dbc.Row(
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody(
+                        [
+                            html.H5("Interactive Map", className="card-title mb-3"),
+                            dl.Map(
+                                id="location-map",
+                                center=[51.1149, -114.0675],
+                                zoom=10,
+                                children=[
+                                    dl.TileLayer(),
+                                ],
+                                style={'width': '100%', 'height': '500px', 'border-radius': '0.25rem'},
+                            ),
+                        ]
+                    ),
+                    className="mb-4 shadow-sm"
+                ),
+                width=12
+            )
         ),
-    ]
+
+        # Temperature graph card
+        dbc.Row(
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody(
+                        [
+                            html.H5("Temperature Analysis", className="card-title mb-3"),
+                            dcc.Graph(figure={}, id="temperature"),
+                        ]
+                    ),
+                    className="mb-4 shadow-sm"
+                ),
+                width=12
+            )
+        ),
+    ],
+    fluid=True,
+    className="px-4"
 )
 # 51.11488758418279, -114.06747997399614
 
@@ -151,7 +185,15 @@ def update_graph(lat_long: str | None):
             marker=dict(color="#35BBF0"),
         )
     )
-    fig.update_xaxes(range=[start, end])
+    fig.update_xaxes(range=[start, end], title="Date")
+    fig.update_yaxes(title="Temperature (°C)")
+    fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(size=12),
+        margin=dict(l=50, r=50, t=30, b=50),
+        hovermode='x unified'
+    )
 
     return fig
 

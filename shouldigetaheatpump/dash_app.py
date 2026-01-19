@@ -16,35 +16,14 @@ app.layout = dbc.Container(
         dbc.Row(
             dbc.Col(html.H1("Should I Get a Heat Pump?", className="text-center my-4"))
         ),
-        # Location input card
-        dbc.Row(
-            dbc.Col(
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.H5("Select Location", className="card-title mb-3"),
-                            dbc.Label("Enter coordinates or click on the map below:"),
-                            dbc.Input(
-                                id="lat-long",
-                                type="text",
-                                placeholder="latitude, longitude (e.g., 51.1149, -114.0675)",
-                                debounce=True,
-                                className="mb-2",
-                            ),
-                        ]
-                    ),
-                    className="mb-4 shadow-sm",
-                ),
-                width=12,
-            )
-        ),
         # Map card
         dbc.Row(
             dbc.Col(
                 dbc.Card(
                     dbc.CardBody(
                         [
-                            html.H5("Interactive Map", className="card-title mb-3"),
+                            html.H5("Select Location", className="card-title mb-3"),
+                            dbc.Label("Click on the map to select a location:"),
                             dl.Map(
                                 id="location-map",
                                 center=[51.1149, -114.0675],
@@ -58,6 +37,11 @@ app.layout = dbc.Container(
                                     "border-radius": "0.25rem",
                                 },
                             ),
+                            html.Div(
+                                id="coordinates-display",
+                                className="mt-3 text-muted",
+                                children="Click on the map to select coordinates",
+                            ),
                         ]
                     ),
                     className="mb-4 shadow-sm",
@@ -65,6 +49,8 @@ app.layout = dbc.Container(
                 width=12,
             )
         ),
+        # Hidden storage for coordinates
+        dcc.Store(id="lat-long-store"),
         # Temperature graph card
         dbc.Row(
             dbc.Col(
@@ -90,22 +76,22 @@ app.layout = dbc.Container(
 
 
 @callback(
-    Output(component_id="lat-long", component_property="value"),
+    Output(component_id="lat-long-store", component_property="data"),
     Output(component_id="location-map", component_property="children"),
     Input(component_id="location-map", component_property="clickData"),
 )
 def map_click(click_data):
-    """Update text input and map marker when map is clicked."""
+    """Update stored coordinates and map marker when map is clicked."""
     if not click_data:
-        # Return TileLayer only (no marker)
+        # Return no data and TileLayer only (no marker)
         return None, [dl.TileLayer()]
 
     # Extract lat/lng from clickData dictionary
     lat = click_data["latlng"]["lat"]
     lng = click_data["latlng"]["lng"]
 
-    # Format as "lat, lng" string for text input
-    lat_long_str = f"{lat}, {lng}"
+    # Store coordinates as dict
+    coords_data = {"lat": lat, "lng": lng}
 
     # Create marker at clicked location
     marker = dl.Marker(
@@ -113,49 +99,33 @@ def map_click(click_data):
         children=[dl.Tooltip("Selected Location"), dl.Popup(f"{lat:.4f}°, {lng:.4f}°")],
     )
 
-    # Return updated text input and map children (TileLayer + Marker)
-    return lat_long_str, [dl.TileLayer(), marker]
+    # Return stored data and map children (TileLayer + Marker)
+    return coords_data, [dl.TileLayer(), marker]
 
 
 @callback(
-    Output(
-        component_id="location-map", component_property="children", allow_duplicate=True
-    ),
-    Input(component_id="lat-long", component_property="value"),
-    prevent_initial_call=True,
+    Output(component_id="coordinates-display", component_property="children"),
+    Input(component_id="lat-long-store", component_property="data"),
 )
-def text_input_to_map(lat_long: str | None):
-    """Update map marker when text input changes."""
-    if not lat_long:
-        # No marker if input is empty
-        return [dl.TileLayer()]
+def update_coordinates_display(coords_data):
+    """Update the displayed coordinates text."""
+    if not coords_data:
+        return "Click on the map to select coordinates"
 
-    try:
-        lat, lng = (float(x.strip()) for x in lat_long.split(","))
-
-        # Create marker at specified coordinates
-        marker = dl.Marker(
-            position=[lat, lng],
-            children=[
-                dl.Tooltip("Selected Location"),
-                dl.Popup(f"{lat:.4f}°, {lng:.4f}°"),
-            ],
-        )
-
-        return [dl.TileLayer(), marker]
-    except (ValueError, AttributeError):
-        # Invalid input - return just TileLayer (no marker)
-        return [dl.TileLayer()]
+    lat = coords_data["lat"]
+    lng = coords_data["lng"]
+    return f"Selected coordinates: {lat:.4f}°, {lng:.4f}°"
 
 
 @callback(
     Output(component_id="temperature", component_property="figure"),
-    Input(component_id="lat-long", component_property="value"),
+    Input(component_id="lat-long-store", component_property="data"),
 )
-def update_graph(lat_long: str | None):
-    if not lat_long:
+def update_graph(coords_data):
+    if not coords_data:
         return {}
-    lat, long = (float(x) for x in lat_long.split(","))
+    lat = coords_data["lat"]
+    long = coords_data["lng"]
 
     end = pendulum.now() - pendulum.duration(days=10)
     start = end - pendulum.duration(years=1)

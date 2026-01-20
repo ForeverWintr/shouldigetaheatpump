@@ -86,7 +86,11 @@ app.layout = dbc.Container(
                             html.H5(
                                 "Temperature Analysis", className="card-title mb-3"
                             ),
-                            dcc.Graph(figure={}, id="temperature"),
+                            dcc.Loading(
+                                id="loading-graph",
+                                type="default",
+                                children=dcc.Graph(figure={}, id="temperature"),
+                            ),
                         ]
                     ),
                     className="mb-4 shadow-sm",

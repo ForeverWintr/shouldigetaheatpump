@@ -132,6 +132,33 @@ class TestDashAppIntegration:
         # Verify theme is now dark
         assert updated_theme == "dark"
 
+    def test_use_current_location_button_renders(self, dash_duo):
+        """Test that the Use Current Location button renders in the DOM."""
+        dash_duo.start_server(app)
+
+        # Wait for button to be present
+        dash_duo.wait_for_element("#use-current-location-btn", timeout=10)
+
+        # Check that button is present
+        button = dash_duo.find_element("#use-current-location-btn")
+        assert button is not None
+        assert "Use Current Location" in button.text
+
+    def test_geolocation_feature_elements(self, dash_duo):
+        """Test that geolocation feature elements render correctly."""
+        dash_duo.start_server(app)
+
+        # Wait for page to load
+        dash_duo.wait_for_element("h1", timeout=10)
+
+        # Check that button exists and is visible
+        button = dash_duo.find_element("#use-current-location-btn")
+        assert button is not None
+        assert button.is_displayed()
+
+        # The geolocation component and alert exist but may not be directly accessible
+        # via Selenium due to being hidden divs. The functionality is tested in unit tests.
+
 
 @pytest.mark.integration
 @pytest.mark.slow

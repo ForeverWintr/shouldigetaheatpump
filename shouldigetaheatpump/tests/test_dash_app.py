@@ -6,8 +6,11 @@ import pandas as pd
 
 from shouldigetaheatpump.dash_app import (
     map_click,
+    trigger_geolocation,
+    update_button_state,
     update_coordinates_display,
     update_graph,
+    update_location_from_geolocation,
 )
 
 
@@ -204,3 +207,229 @@ class TestUpdateGraphCallback:
         assert result["layout"]["font"]["color"] == "#f8f9fa"  # Light text
         assert result["layout"]["xaxis"]["gridcolor"] == "rgba(255, 255, 255, 0.1)"
         assert result["layout"]["yaxis"]["gridcolor"] == "rgba(255, 255, 255, 0.1)"
+
+
+class TestTriggerGeolocationCallback:
+    """Test the trigger_geolocation callback function."""
+
+    def test_trigger_with_click(self):
+        """Test that clicking button triggers geolocation."""
+        result = trigger_geolocation(n_clicks=1)
+        assert result is True
+
+    def test_trigger_with_multiple_clicks(self):
+        """Test that multiple clicks still trigger geolocation."""
+        result = trigger_geolocation(n_clicks=5)
+        assert result is True
+
+    def test_trigger_with_zero_clicks(self):
+        """Test that zero clicks returns False."""
+        result = trigger_geolocation(n_clicks=0)
+        assert result is False
+
+    def test_trigger_with_none(self):
+        """Test that None clicks returns False."""
+        result = trigger_geolocation(n_clicks=None)
+        assert result is False
+
+
+class TestUpdateLocationFromGeolocationCallback:
+    """Test the update_location_from_geolocation callback function."""
+
+    def test_successful_position(self):
+        """Test that successful position updates store and map."""
+        position = {"lat": 51.1149, "lon": -114.0675}
+
+        (
+            coords_data,
+            viewport,
+            map_children,
+            alert_msg,
+            alert_open,
+            alert_color,
+        ) = update_location_from_geolocation(position, None)
+
+        # Check coordinates are stored correctly (lon → lng conversion)
+        assert coords_data == {"lat": 51.1149, "lng": -114.0675}
+
+        # Check viewport is set correctly for panning
+        assert viewport["center"] == [51.1149, -114.0675]
+        assert viewport["zoom"] == 12
+        assert viewport["transition"] == "flyTo"
+
+        # Check map children includes TileLayer and Marker
+        assert len(map_children) == 2
+        assert map_children[0].__class__.__name__ == "TileLayer"
+        assert map_children[1].__class__.__name__ == "Marker"
+        assert map_children[1].position == [51.1149, -114.0675]
+
+        # Check alert is closed
+        assert alert_msg == ""
+        assert alert_open is False
+        assert alert_color == "success"
+
+    def test_permission_denied_error(self):
+        """Test that permission denied error shows appropriate message."""
+        from dash import no_update
+
+        position_error = {"code": 1}
+
+        (
+            coords_data,
+            viewport,
+            map_children,
+            alert_msg,
+            alert_open,
+            alert_color,
+        ) = update_location_from_geolocation(None, position_error)
+
+        # Check that store/map are not updated
+        assert coords_data == no_update
+        assert viewport == no_update
+        assert map_children == no_update
+
+        # Check error message
+        assert (
+            alert_msg
+            == "Permission denied. Please enable location access in your browser."
+        )
+        assert alert_open is True
+        assert alert_color == "danger"
+
+    def test_position_unavailable_error(self):
+        """Test that position unavailable error shows appropriate message."""
+        position_error = {"code": 2}
+
+        (
+            coords_data,
+            viewport,
+            map_children,
+            alert_msg,
+            alert_open,
+            alert_color,
+        ) = update_location_from_geolocation(None, position_error)
+
+        # Check error message
+        assert (
+            alert_msg
+            == "Position unavailable. Please check your device location settings."
+        )
+        assert alert_open is True
+        assert alert_color == "danger"
+
+    def test_timeout_error(self):
+        """Test that timeout error shows appropriate message."""
+        position_error = {"code": 3}
+
+        (
+            coords_data,
+            viewport,
+            map_children,
+            alert_msg,
+            alert_open,
+            alert_color,
+        ) = update_location_from_geolocation(None, position_error)
+
+        # Check error message
+        assert alert_msg == "Location request timed out. Please try again."
+        assert alert_open is True
+        assert alert_color == "danger"
+
+    def test_unknown_error(self):
+        """Test that unknown error code shows generic message."""
+        position_error = {"code": 999}
+
+        (
+            coords_data,
+            viewport,
+            map_children,
+            alert_msg,
+            alert_open,
+            alert_color,
+        ) = update_location_from_geolocation(None, position_error)
+
+        # Check error message
+        assert alert_msg == "An error occurred while getting your location."
+        assert alert_open is True
+        assert alert_color == "danger"
+
+    def test_coordinate_conversion(self):
+        """Test that lon is correctly converted to lng in store."""
+        position = {"lat": 40.7128, "lon": -74.0060}
+
+        coords_data, _, _, _, _, _ = update_location_from_geolocation(position, None)
+
+        # Verify conversion from lon to lng
+        assert "lng" in coords_data
+        assert "lon" not in coords_data
+        assert coords_data["lng"] == -74.0060
+
+
+class TestUpdateButtonStateCallback:
+    """Test the update_button_state callback function."""
+
+    def test_loading_state(self):
+        """Test that button shows loading state when update_now is True."""
+        children, disabled = update_button_state(
+            update_now=True, position=None, position_error=None
+        )
+
+        # Check loading state
+        assert len(children) == 2
+        assert children[0].className == "fa fa-spinner fa-spin me-2"
+        assert children[1] == "Getting location..."
+        assert disabled is True
+
+    def test_success_state(self):
+        """Test that button restores to normal state after success."""
+        position = {"lat": 51.1149, "lon": -114.0675}
+
+        children, disabled = update_button_state(
+            update_now=False, position=position, position_error=None
+        )
+
+        # Check normal state
+        assert len(children) == 2
+        assert children[0].className == "fa fa-location-arrow me-2"
+        assert children[1] == "Use Current Location"
+        assert disabled is False
+
+    def test_success_state_with_update_now(self):
+        """Test that button shows normal state when position received even if update_now is True."""
+        position = {"lat": 51.1149, "lon": -114.0675}
+
+        children, disabled = update_button_state(
+            update_now=True, position=position, position_error=None
+        )
+
+        # Check normal state (position takes precedence)
+        assert len(children) == 2
+        assert children[0].className == "fa fa-location-arrow me-2"
+        assert children[1] == "Use Current Location"
+        assert disabled is False
+
+    def test_error_state(self):
+        """Test that button restores to normal state after error."""
+        position_error = {"code": 1}
+
+        children, disabled = update_button_state(
+            update_now=False, position=None, position_error=position_error
+        )
+
+        # Check normal state
+        assert len(children) == 2
+        assert children[0].className == "fa fa-location-arrow me-2"
+        assert children[1] == "Use Current Location"
+        assert disabled is False
+
+    def test_default_state(self):
+        """Test that button shows default state when nothing triggered."""
+        children, disabled = update_button_state(
+            update_now=False, position=None, position_error=None
+        )
+
+        # Check default state
+        assert len(children) == 2
+        assert children[0].className == "fa fa-location-arrow me-2"
+        assert children[1] == "Use Current Location"
+        assert disabled is False

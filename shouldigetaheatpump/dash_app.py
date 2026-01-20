@@ -48,11 +48,28 @@ app.layout = dbc.Container(
                     dbc.CardBody(
                         [
                             html.H5("Select Location", className="card-title mb-3"),
+                            dbc.Button(
+                                [
+                                    html.I(className="fa fa-location-arrow me-2"),
+                                    "Use Current Location",
+                                ],
+                                id="use-current-location-btn",
+                                color="primary",
+                                className="mb-3",
+                                outline=True,
+                            ),
+                            dbc.Alert(
+                                id="geolocation-alert",
+                                is_open=False,
+                                dismissable=True,
+                                className="mb-3",
+                            ),
                             dbc.Label("Click on the map to select a location:"),
                             dl.Map(
                                 id="location-map",
                                 center=[51.1149, -114.0675],
                                 zoom=10,
+                                viewport={"center": [51.1149, -114.0675], "zoom": 10},
                                 children=[
                                     dl.TileLayer(),
                                 ],
@@ -77,6 +94,12 @@ app.layout = dbc.Container(
         # Hidden storage for coordinates
         dcc.Store(id="lat-long-store"),
         dcc.Store(id="theme-store", storage_type="local", data=True),  # True = light
+        dcc.Geolocation(
+            id="geolocation",
+            high_accuracy=True,
+            timeout=10000,
+            maximum_age=0,
+        ),
         # Temperature graph card
         dbc.Row(
             dbc.Col(
@@ -158,6 +181,111 @@ def update_coordinates_display(coords_data):
     lat = coords_data["lat"]
     lng = coords_data["lng"]
     return f"Selected coordinates: {lat:.4f}°, {lng:.4f}°"
+
+
+@callback(
+    Output("geolocation", "update_now"),
+    Input("use-current-location-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def trigger_geolocation(n_clicks):
+    """When button clicked, trigger geolocation update."""
+    return True if n_clicks else False
+
+
+@callback(
+    Output("lat-long-store", "data", allow_duplicate=True),
+    Output("location-map", "viewport"),
+    Output("location-map", "children", allow_duplicate=True),
+    Output("geolocation-alert", "children"),
+    Output("geolocation-alert", "is_open"),
+    Output("geolocation-alert", "color"),
+    Input("geolocation", "position"),
+    Input("geolocation", "position_error"),
+    prevent_initial_call=True,
+)
+def update_location_from_geolocation(position, position_error):
+    """Update store and map when geolocation provides position or error."""
+    # Handle errors
+    if position_error:
+        error_code = position_error.get("code", 0)
+        if error_code == 1:
+            error_msg = (
+                "Permission denied. Please enable location access in your browser."
+            )
+        elif error_code == 2:
+            error_msg = (
+                "Position unavailable. Please check your device location settings."
+            )
+        elif error_code == 3:
+            error_msg = "Location request timed out. Please try again."
+        else:
+            error_msg = "An error occurred while getting your location."
+
+        # Don't update store/map, just show error
+        from dash import no_update
+
+        return no_update, no_update, no_update, error_msg, True, "danger"
+
+    # Handle successful position
+    if position:
+        lat = position["lat"]
+        lon = position["lon"]
+
+        # Convert lon to lng for consistency with store format
+        coords_data = {"lat": lat, "lng": lon}
+
+        # Create marker at location
+        marker = dl.Marker(
+            position=[lat, lon],
+            children=[dl.Tooltip("Your Location"), dl.Popup(f"{lat:.4f}°, {lon:.4f}°")],
+        )
+
+        # Return updated store, viewport (to pan map), children, and close alert
+        return (
+            coords_data,
+            {"center": [lat, lon], "zoom": 12, "transition": "flyTo"},
+            [dl.TileLayer(), marker],
+            "",
+            False,
+            "success",
+        )
+
+    # Neither position nor error (shouldn't happen)
+    from dash import no_update
+
+    return no_update, no_update, no_update, no_update, no_update, no_update
+
+
+@callback(
+    Output("use-current-location-btn", "children"),
+    Output("use-current-location-btn", "disabled"),
+    Input("geolocation", "update_now"),
+    Input("geolocation", "position"),
+    Input("geolocation", "position_error"),
+    prevent_initial_call=True,
+)
+def update_button_state(update_now, position, position_error):
+    """Show loading spinner while fetching location."""
+    # If update_now is True and we don't have a result yet, show loading
+    if update_now and not position and not position_error:
+        return [
+            html.I(className="fa fa-spinner fa-spin me-2"),
+            "Getting location...",
+        ], True
+
+    # If position or error received, restore button
+    if position or position_error:
+        return [
+            html.I(className="fa fa-location-arrow me-2"),
+            "Use Current Location",
+        ], False
+
+    # Default state
+    return [
+        html.I(className="fa fa-location-arrow me-2"),
+        "Use Current Location",
+    ], False
 
 
 @callback(

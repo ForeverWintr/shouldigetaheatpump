@@ -25,7 +25,6 @@ dev = [
     "pytest-cov>=4.1.0",
     "ruff>=0.7.4",
     "dash[testing]>=2.17.0",
-    "selenium>=4.0.0",
 ]
 
 [tool.pytest.ini_options]

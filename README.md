@@ -58,15 +58,19 @@ uv run pytest --cov=shouldigetaheatpump --cov-report=html
 
 #### Integration Tests
 
-Integration tests use Selenium to test the full app in a browser. To run them:
+Integration tests use Selenium to test the full app in a browser.
 
-1. Install [ChromeDriver](https://chromedriver.chromium.org/downloads) and ensure it's in your PATH
-2. Run the integration tests:
-   ```bash
-   uv run pytest -m integration
-   ```
+**Requirements:**
+- ChromeDriver must be installed and in your PATH
+- Install with Homebrew: `brew install chromedriver`
+- Or download from [ChromeDriver downloads](https://chromedriver.chromium.org/downloads)
 
-**Note:** Integration tests are optional and primarily useful for CI/CD pipelines or testing critical user flows.
+**Running integration tests:**
+```bash
+uv run pytest -m integration
+```
+
+**Note:** Integration tests run automatically in CI (GitHub Actions has ChromeDriver pre-installed). They're optional for local development.
 
 ### Code Quality
 

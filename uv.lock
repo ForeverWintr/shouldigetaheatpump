@@ -1645,7 +1645,6 @@ dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
-    { name = "selenium" },
 ]
 
 [package.metadata]
@@ -1668,7 +1667,6 @@ dev = [
     { name = "pytest", specifier = ">=8.1.1" },
     { name = "pytest-cov", specifier = ">=4.1.0" },
     { name = "ruff", specifier = ">=0.7.4" },
-    { name = "selenium", specifier = ">=4.0.0" },
 ]
 
 [[package]]

@@ -70,10 +70,27 @@ class TestUpdateGraphCallback:
     """Test the update_graph callback function."""
 
     def test_graph_with_no_coords(self):
-        """Test that empty graph is returned when no coordinates."""
-        result = update_graph(None)
+        """Test that styled empty graph is returned when no coordinates."""
+        result = update_graph(None, True)
 
-        assert result == {}
+        # Should return a figure (not empty dict)
+        assert "layout" in result
+        assert "data" in result
+        # Data should be empty (no traces)
+        assert len(result["data"]) == 0
+        # Layout should have theme-aware styling
+        assert result["layout"]["plot_bgcolor"] == "rgba(0,0,0,0)"
+        assert result["layout"]["paper_bgcolor"] == "rgba(0,0,0,0)"
+        assert result["layout"]["font"]["color"] == "#212529"  # Light mode
+
+    def test_graph_with_no_coords_dark_mode(self):
+        """Test that empty graph uses dark mode colors when theme is dark."""
+        result = update_graph(None, False)
+
+        # Should return a figure with dark mode styling
+        assert "layout" in result
+        assert len(result["data"]) == 0
+        assert result["layout"]["font"]["color"] == "#f8f9fa"  # Dark mode
 
     @patch("shouldigetaheatpump.dash_app.get_data.get_weather_data")
     def test_graph_with_valid_coords(self, mock_get_weather_data):
@@ -89,7 +106,7 @@ class TestUpdateGraphCallback:
 
         coords_data = {"lat": 51.1149, "lng": -114.0675}
 
-        result = update_graph(coords_data)
+        result = update_graph(coords_data, True)
 
         # Check that a figure was returned
         assert "data" in result
@@ -115,7 +132,7 @@ class TestUpdateGraphCallback:
 
         coords_data = {"lat": 51.1149, "lng": -114.0675}
 
-        result = update_graph(coords_data)
+        result = update_graph(coords_data, True)
 
         # Check layout properties
         assert result["layout"]["xaxis"]["title"]["text"] == "Date"
@@ -136,8 +153,54 @@ class TestUpdateGraphCallback:
 
         coords_data = {"lat": 51.1149, "lng": -114.0675}
 
-        result = update_graph(coords_data)
+        result = update_graph(coords_data, True)
 
         # Check trace names
         assert result["data"][0]["name"] == "Hourly Temperature"
         assert result["data"][1]["name"] == "Daily Average"
+
+    @patch("shouldigetaheatpump.dash_app.get_data.get_weather_data")
+    def test_graph_light_mode_colors(self, mock_get_weather_data):
+        """Test that graph uses correct colors in light mode."""
+        # Mock weather data
+        mock_df = pd.DataFrame(
+            {
+                "date": pd.date_range(start="2024-01-01", periods=24, freq="h"),
+                "temperature": [i * 0.5 for i in range(24)],
+            }
+        )
+        mock_get_weather_data.return_value = mock_df
+
+        coords_data = {"lat": 51.1149, "lng": -114.0675}
+
+        result = update_graph(coords_data, is_light_mode=True)
+
+        # Check light mode colors
+        assert result["data"][0]["marker"]["color"] == "#35F0BF"  # Hourly cyan
+        assert result["data"][1]["marker"]["color"] == "#35BBF0"  # Daily blue
+        assert result["layout"]["font"]["color"] == "#212529"  # Dark text
+        assert result["layout"]["xaxis"]["gridcolor"] == "rgba(0, 0, 0, 0.1)"
+        assert result["layout"]["yaxis"]["gridcolor"] == "rgba(0, 0, 0, 0.1)"
+
+    @patch("shouldigetaheatpump.dash_app.get_data.get_weather_data")
+    def test_graph_dark_mode_colors(self, mock_get_weather_data):
+        """Test that graph uses correct colors in dark mode."""
+        # Mock weather data
+        mock_df = pd.DataFrame(
+            {
+                "date": pd.date_range(start="2024-01-01", periods=24, freq="h"),
+                "temperature": [i * 0.5 for i in range(24)],
+            }
+        )
+        mock_get_weather_data.return_value = mock_df
+
+        coords_data = {"lat": 51.1149, "lng": -114.0675}
+
+        result = update_graph(coords_data, is_light_mode=False)
+
+        # Check dark mode colors
+        assert result["data"][0]["marker"]["color"] == "#4DFFD7"  # Lighter cyan
+        assert result["data"][1]["marker"]["color"] == "#5CD4FF"  # Lighter blue
+        assert result["layout"]["font"]["color"] == "#f8f9fa"  # Light text
+        assert result["layout"]["xaxis"]["gridcolor"] == "rgba(255, 255, 255, 0.1)"
+        assert result["layout"]["yaxis"]["gridcolor"] == "rgba(255, 255, 255, 0.1)"

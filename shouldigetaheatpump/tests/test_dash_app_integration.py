@@ -78,6 +78,60 @@ class TestDashAppIntegration:
         # Note: This will fail if there are any console errors
         assert dash_duo.get_logs() == [], "Console errors detected"
 
+    def test_theme_toggle_renders(self, dash_duo):
+        """Test that the theme toggle switch renders with moon and sun icons."""
+        dash_duo.start_server(app)
+
+        # Wait for theme toggle
+        dash_duo.wait_for_element("#theme-switch", timeout=10)
+
+        # Check that theme switch is present
+        theme_switch = dash_duo.find_element("#theme-switch")
+        assert theme_switch is not None
+
+        # Check that moon and sun icons are present
+        moon_icon = dash_duo.find_element(".fa-moon")
+        sun_icon = dash_duo.find_element(".fa-sun")
+        assert moon_icon is not None
+        assert sun_icon is not None
+
+    def test_theme_switch_default_state(self, dash_duo):
+        """Test that theme switch is checked (light mode) by default."""
+        dash_duo.start_server(app)
+
+        # Wait for theme toggle
+        dash_duo.wait_for_element("#theme-switch", timeout=10)
+
+        # Check that theme switch is checked (True = light mode)
+        theme_switch = dash_duo.find_element("#theme-switch")
+        # The switch input should be checked by default
+        is_checked = theme_switch.is_selected()
+        assert is_checked is True
+
+    def test_theme_toggle_updates_attribute(self, dash_duo):
+        """Test that clicking toggle updates data-bs-theme attribute."""
+        dash_duo.start_server(app)
+
+        # Wait for theme toggle
+        dash_duo.wait_for_element("#theme-switch", timeout=10)
+
+        # Click the theme switch to toggle to dark mode
+        theme_switch = dash_duo.find_element("#theme-switch")
+        theme_switch.click()
+
+        # Wait a bit for the clientside callback to execute
+        import time
+
+        time.sleep(0.5)
+
+        # Get updated theme attribute (should be 'dark' after clicking)
+        updated_theme = dash_duo.driver.execute_script(
+            "return document.documentElement.getAttribute('data-bs-theme');"
+        )
+
+        # Verify theme is now dark
+        assert updated_theme == "dark"
+
 
 @pytest.mark.integration
 @pytest.mark.slow
